@@ -1,0 +1,21 @@
+<%- include("partials/header") %>
+<div class="container">
+	<div class="row">
+		<h1 style="text-align:center;">TaxBlock New Stock</h1>
+		<div style="width:30% ;margin : 0 auto;">
+			<form action="/newStock" method="POST">
+				<div class="form-group"><input class="form-control" type="text" name="stock[name]" placeholder="name"></div>
+				<div class="form-group"><input class="form-control" type="text" name="stock[l52]" placeholder="52-week-low"></div>
+				<div class="form-group"><input class="form-control" type="text" name="stock[price]" placeholder="price"></div>
+				<div class="form-group"><input class="form-control" type="text" name="stock[growth_1]" placeholder="1-day-growth"></div>
+				<div class="form-group"><input class="form-control" type="text" name="stock[Mcap]" placeholder="Market Cap"></div>
+				<div class="form-group"><input class="form-control" type="text" name="stock[Evalue]" placeholder="Enterprise Value"></div>
+				<div class="form-group"><input class="form-control" type="text" name="stock[EPS5]" placeholder="EPS5 year growth"></div>
+				<div class="form-group"><input class="form-control" type="text" name="stock[DtoE]" placeholder="Debt to Equity"></div>
+				<div class="form-group"><input class="form-control" type="text" name="stock[PtoG]" placeholder="Price Earnings to growth"></div>
+				<div class="form-group"><button class="btn btn-lg btn-primary btn-block">Add Stock</button></div>
+			</form>
+		</div>
+	</div>
+</div>
+<%- include("partials/footer") %>

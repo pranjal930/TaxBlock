@@ -1,0 +1,32 @@
+<%- include("partials/header") %>
+<div class="well">
+				<h4><strong>Watchlist</strong></h4>
+						<div class="col-md-2"><strong>Name</strong></div>
+						<div class="col-md-1"><strong>Price</strong></div>
+						<div class="col-md-1"><strong><p>52-week-low</p></strong></div>
+						<div class="col-md-1"><strong><p>1 day Growth(%)</p></strong></div>	
+						<div class="col-md-1"><strong><p>Market Cap(Rs.)</p></strong></div>	
+						<div class="col-md-1"><strong><p>Enterprise Value(Rs.)</p></strong></div>	
+						<div class="col-md-1"><strong><p>EPS5 year growth(%)</p></strong></div>	
+						<div class="col-md-1"><strong><p>Debt to Equity</p></strong></div>	
+						<div class="col-md-1"><strong><p>Price Earnings to Growth</p></strong></div>	
+				<% foundUser.watchlist.forEach(function(stock){ if(stock!=null){%>
+				<div class="row">
+					<div class="col-md-12">
+						<div class="row">
+						<div class="col-md-2"><strong><%= stock.name %></strong></div>
+						<div class="col-md-1">Rs.<%= stock.price %></div>
+						<div class="col-md-1"><p><%= stock.l52 %> </p></div>
+						<div class="col-md-1"><p><%= stock.growth_1 %></p></div>	
+						<div class="col-md-1"><p><%= stock.Mcap %> </p></div>	
+						<div class="col-md-1"><p><%= stock.Evalue %></p></div>	
+						<div class="col-md-1"><p><%= stock.EPS5 %> </p></div>	
+						<div class="col-md-1"><p><%= stock.DtoE %> </p></div>	
+						<div class="col-md-1"><p><%= stock.PtoG %></p></div>	
+						<a class="btn btn-xs btn-warning" href="/<%=currentUser._id%>/buy/<%=stock._id%>">Buy</a>
+						</div>
+					</div>
+				</div>
+				<% }}) %>
+			</div>
+<%- include("partials/footer") %>

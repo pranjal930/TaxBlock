@@ -1,0 +1,21 @@
+<%- include("partials/header") %>
+<div class="well">
+				<h4><strong>Portfolios</strong></h4>
+						<div class="col-md-2"><strong>Name</strong></div>
+						<div class="col-md-1"><strong>Price</strong></div>
+						<div class="col-md-1"><strong><p>Quantity</p></strong></div>
+						
+				<% foundStocks.forEach(function(portfolio){ if(parseInt(portfolio.quantity)>0){%>
+				<div class="row">
+					<div class="col-md-12">
+						<div class="row">
+						<div class="col-md-2"><strong><%= portfolio.stock.name %></strong></div>
+						<div class="col-md-1">Rs.<%= portfolio.stock.price %></div>
+						<div class="col-md-1"><%= portfolio.quantity %></div>
+							<a  href="/<%=currentUser._id%>/sell/<%=portfolio.stock.id%>"class="btn btn-xs btn-success">Sell</a>
+						</div>
+					</div>
+				</div>
+				<%} }) %>
+			</div>
+<%- include("partials/footer") %>
