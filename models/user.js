@@ -9,18 +9,19 @@ var UserSchema = new mongoose.Schema({
          ref: "Stock"
       }
    ],
-	bought: [
+	transaction: [
       {
-         type: mongoose.Schema.Types.ObjectId,
-         ref: "Stock"
+         stock:{
+			 id:{
+				 type: mongoose.Schema.Types.ObjectId,
+         	 ref: "Stock"
+			 },
+			 name:String
+		 },
+		  process:String,
+		  quantity:{type:Number,default:0}
       }
    ],
-	sold: [
-      {
-         type: mongoose.Schema.Types.ObjectId,
-         ref: "Stock"
-      }
-   ]
 });
 
 UserSchema.plugin(passportLocalMongoose);

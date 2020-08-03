@@ -9,7 +9,9 @@ var mongoose              = require("mongoose"),
 	flash                 = require("connect-flash"),
 	LocalStrategy         = require("passport-local"),
 	methodOverride         = require("method-override"),
+	middleware            = require("./middleware"),
 	passportLocalMongoose = require("passport-local-mongoose");
+	
 mongoose.connect("mongodb://localhost/TaxBlock");
 app.set('view engine','ejs');
 app.use(bodyParser.urlencoded({extended:true}));
@@ -38,7 +40,7 @@ app.get("/",function (req,res){
 	res.render("home");	
 });
 
-app.get("/buy",function(req,res){
+app.get("/buy",middleware.isLoggedIn,function(req,res){
 	Stock.find({},function(err,allStocks){
 		if(err)
 			{
@@ -63,6 +65,7 @@ app.post("/newStock",function(req,res){
 		}
 		else 	
 		{
+			req.flash("success","Successfully added new Entry");
 			stock.save();
 			res.redirect("/");
 		}
@@ -80,6 +83,7 @@ app.post("/register",function(req,res){
 			return res.redirect("/register");
 		}
 		passport.authenticate("local")(req,res,function(){
+			req.flash("success","Welcome to TaxBlock");
 			res.redirect("/");
 		});
 	});
@@ -98,7 +102,8 @@ app.post("/login",passport.authenticate("local",{
 	res.redirect("/login");
 })
 
-app.post("/:user_id/watchlist/:stock_id",function(req,res){
+//add to watchlist
+app.post("/:user_id/watchlist/:stock_id",middleware.isLoggedIn,function(req,res){
 	User.findById(req.params.user_id,function(err,foundUser){
 		if(err)
 			{
@@ -111,11 +116,8 @@ app.post("/:user_id/watchlist/:stock_id",function(req,res){
 						console.log(err);
 					else
 					{
-						if(foundUser.watchlist.indexOf(addStock)===-1)
-						{
 							foundUser.watchlist.push(addStock);	
 							foundUser.save();
-						}
 					}
 				});
 				
@@ -124,7 +126,22 @@ app.post("/:user_id/watchlist/:stock_id",function(req,res){
 	
 })
 
-app.get("/:user_id/buy/:stock_id",function(req,res){
+//display watchlist
+app.get("/:user_id/watchlist",middleware.isLoggedIn,function(req,res){
+	User.findById(req.params.user_id).populate("watchlist").exec(function(err,foundUser){
+		if(err)
+			console.log(err);
+		else
+			{
+				//console.log(foundUser);
+				res.render("watchlist",{foundUser:foundUser});
+			}
+	});
+});
+
+
+//display buy page
+app.get("/:user_id/buy/:stock_id",middleware.isLoggedIn,function(req,res){
 	User.findById(req.params.user_id,function(err,foundUser){
 		Stock.findById(req.params.stock_id,function(err,stock){
 			res.render("newPortfolio",{foundUser:foundUser,stock:stock});
@@ -132,81 +149,11 @@ app.get("/:user_id/buy/:stock_id",function(req,res){
 	})
 });
 
-app.post("/:user_id/buy/:stock_id",function(req,res){
-	
-	User.findById(req.params.user_id,function(err,foundUser){
-		if(err)
-			{
-				console.log(err);
-			}
-		else
-			{
-				Stock.findById(req.params.stock_id,function(err,addStock){
-					if(err)
-						console.log(err);
-					else
-						{
-							/*var flag=false;
-							Portfolio.find({username:foundUser.username},function(err,foundEntry)
-										  {
-								if(err)
-									console.log(err);
-								else if(foundEntry!=null)
-								{
-									foundEntry.forEach(function(entry){
-										
-									if(entry.stock.id==req.params.stock_id)
-										{
-											console.log("here");
-											flag=true;
-											var currQuantity=entry.quantity;
-											console.log(currQuantity);
-											entry.quantity=parseInt(currQuantity)+parseInt(req.body.quantity);
-											entry.save();
-											res.redirect("/buy");
-										}
-									})
-								}
-							})*/
-							if(flag==false)
-							{
-								var portfolio =new Portfolio();
-							            portfolio.username=foundUser.username;
-										portfolio.stock.id=req.params.stock_id;
-										portfolio.stock.price=addStock.price;
-										portfolio.stock.name=addStock.name;
-										portfolio.stock.l52=addStock.l52;
-										portfolio.stock.growth_1=addStock.growth_1;
-										portfolio.stock.Mcap=addStock.Mcap;
-										portfolio.stock.Evalue=addStock.Evalue;
-										portfolio.stock.EPS5=addStock.EPS5;
-										portfolio.stock.DtoE=addStock.DtoE;
-										portfolio.stock.PtoG=addStock.PtoG;
-										portfolio.quantity=req.body.quantity;
-									Portfolio.create(portfolio,function(err,newportfolio){
-								if(err)
-									{
-										console.log(err);
-									}
-								else
-									{
-										res.redirect("/buy");
-									}
-							})
-							}
-							
-						}
-				});
-				
-			}
-	})
-	
-})
 
-
-app.put("/:user_id/buy/:stock_id",function(req,res){
+//buy or update purchased stock
+app.post("/:user_id/buy/:stock_id",middleware.isLoggedIn,function(req,res){
 	
-	User.findById(req.params.user_id,function(err,foundUser){
+	User.findByIdAndUpdate(req.params.user_id,function(err,foundUser){
 		if(err)
 			{
 				console.log(err);
@@ -229,21 +176,47 @@ app.put("/:user_id/buy/:stock_id",function(req,res){
 										
 									if(entry.stock.id==req.params.stock_id)
 										{
-											console.log("here");
+											
 											flag=true;
 											var currQuantity=entry.quantity;
 											console.log(currQuantity);
-											if(parseInt(req.body.quantity)<=parseInt(currQuantity))
-											{
-												entry.quantity=parseInt(currQuantity)-parseInt(req.body.quantity);
-												entry.save();
-												res.redirect("/buy");
-											}
+											entry.quantity=parseInt(currQuantity)+parseInt(req.body.quantity);
+											entry.save();
+											req.flash("success","Successfully Updated Stock Quantity");
+											res.redirect("/buy");
 										}
 									})
 								}
 							})
-							
+							setTimeout(function(){
+								if(flag==false)
+							{
+								var portfolio =new Portfolio();
+							            portfolio.username=foundUser.username;
+										portfolio.stock.id=req.params.stock_id;
+										portfolio.stock.price=addStock.price;
+										portfolio.stock.name=addStock.name;
+										portfolio.stock.l52=addStock.l52;
+										portfolio.stock.growth_1=addStock.growth_1;
+										portfolio.stock.Mcap=addStock.Mcap;
+										portfolio.stock.Evalue=addStock.Evalue;
+										portfolio.stock.EPS5=addStock.EPS5;
+										portfolio.stock.DtoE=addStock.DtoE;
+										portfolio.stock.PtoG=addStock.PtoG;
+										portfolio.quantity=req.body.quantity;
+									Portfolio.create(portfolio,function(err,newportfolio){
+								if(err)
+									{
+										console.log(err);
+									}
+								else
+									{
+										req.flash("success","Stock bought successfully");
+										res.redirect("/buy");	
+									}
+							})
+							}
+							},500);
 							
 						}
 				});
@@ -251,9 +224,10 @@ app.put("/:user_id/buy/:stock_id",function(req,res){
 			}
 	})
 	
-})	
+})
 
-app.get("/:user_id/sell/:stock_id",function(req,res){
+//display sell page
+app.get("/:user_id/sell/:stock_id",middleware.isLoggedIn,function(req,res){
 	User.findById(req.params.user_id,function(err,foundUser){
 		if(err)
 			{
@@ -288,24 +262,63 @@ app.get("/:user_id/sell/:stock_id",function(req,res){
 	})
 });
 
-
-
-
-app.get("/:user_id/watchlist",function(req,res){
-	User.findById(req.params.user_id).populate("watchlist").exec(function(err,foundUser){
+//route for selling stock
+app.put("/:user_id/buy/:stock_id",middleware.isLoggedIn,function(req,res){
+	
+	User.findById(req.params.user_id,function(err,foundUser){
 		if(err)
-			console.log(err);
+			{
+				console.log(err);
+			}
 		else
 			{
-				//console.log(foundUser);
-				res.render("watchlist",{foundUser:foundUser});
+				Stock.findById(req.params.stock_id,function(err,addStock){
+					if(err)
+						console.log(err);
+					else
+						{
+							var flag=false;
+							Portfolio.find({username:foundUser.username},function(err,foundEntry)
+										  {
+								if(err)
+									console.log(err);
+								else if(foundEntry!=null)
+								{
+									foundEntry.forEach(function(entry){
+										
+									if(entry.stock.id==req.params.stock_id)
+										{
+											flag=true;
+											var currQuantity=entry.quantity;
+											console.log(currQuantity);
+											if(parseInt(req.body.quantity)<=parseInt(currQuantity))
+											{
+												entry.quantity=parseInt(currQuantity)-parseInt(req.body.quantity);
+												entry.save();
+												res.redirect("/buy");
+											}
+											else
+											{
+												req.flash("error","Please Input Valid Quantity");
+												res.redirect("/"+req.params.user_id+"/sell/"+req.params.stock_id);
+											}
+										}
+									})
+								}
+							})
+							
+							
+						}
+				});
+				
 			}
-	});
-});
+	})
+	
+})
 
 
-
-app.get("/:user_id/bought",function(req,res){
+//display user portfolios
+app.get("/:user_id/bought",middleware.isLoggedIn,function(req,res){
 	User.findById(req.params.user_id,function(err,curr){
 		if(err)
 			console.log(err);
